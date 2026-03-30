@@ -1,0 +1,1535 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Creato — Where Brands Meet Creators</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Manrope:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --black: #0a0a0a;
+  --white: #fafaf8;
+  --gray-100: #f4f2ee;
+  --gray-200: #e8e4dc;
+  --gray-400: #b0aa9e;
+  --gray-600: #706a60;
+  --violet: #6b38d4;
+  --violet-light: #ede9fe;
+  --violet-mid: #8455ef;
+  --cream: #fdf9f3;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Manrope', sans-serif;
+  background: var(--cream);
+  color: var(--black);
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  cursor: none;
+}
+
+/* CUSTOM CURSOR */
+.cursor {
+  width: 10px; height: 10px;
+  background: var(--violet);
+  border-radius: 50%;
+  position: fixed; pointer-events: none;
+  z-index: 9999; transform: translate(-50%,-50%);
+  transition: width 0.2s, height 0.2s, background 0.2s;
+  mix-blend-mode: multiply;
+}
+.cursor-ring {
+  width: 36px; height: 36px;
+  border: 1.5px solid var(--violet);
+  border-radius: 50%;
+  position: fixed; pointer-events: none;
+  z-index: 9998; transform: translate(-50%,-50%);
+  transition: transform 0.12s ease, width 0.2s, height 0.2s, opacity 0.2s;
+  opacity: 0.4;
+}
+body:hover .cursor { opacity: 1; }
+a:hover ~ .cursor, button:hover ~ .cursor { width: 20px; height: 20px; }
+
+/* NOISE OVERLAY */
+body::before {
+  content: ''; position: fixed; inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events: none; z-index: 0; opacity: 0.4;
+}
+
+/* NAV */
+nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 18px 48px;
+  background: rgba(253,249,243,0.88);
+  backdrop-filter: blur(24px);
+  border-bottom: 0.5px solid var(--gray-200);
+  transition: padding 0.3s;
+}
+nav.scrolled { padding: 12px 48px; }
+
+.nav-logo {
+  display: flex; align-items: center; gap: 10px;
+  text-decoration: none;
+}
+.nav-logo img {
+  height: 28px; width: auto;
+  filter: invert(0);
+}
+.nav-logo-text {
+  font-size: 17px; font-weight: 700; color: var(--black);
+  letter-spacing: -0.5px; display: none;
+}
+
+.nav-links {
+  display: flex; align-items: center; gap: 36px; list-style: none;
+}
+.nav-links a {
+  font-size: 14px; font-weight: 400; color: var(--gray-600);
+  text-decoration: none; transition: color 0.2s; position: relative;
+}
+.nav-links a::after {
+  content: ''; position: absolute; bottom: -2px; left: 0; right: 0;
+  height: 0.5px; background: var(--violet);
+  transform: scaleX(0); transition: transform 0.2s;
+}
+.nav-links a:hover { color: var(--black); }
+.nav-links a:hover::after { transform: scaleX(1); }
+
+.nav-counter {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--violet-light); border-radius: 999px;
+  padding: 6px 14px; font-size: 13px; color: var(--violet); font-weight: 600;
+}
+.nav-counter-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--violet); animation: livepulse 1.5s infinite;
+}
+@keyframes livepulse {
+  0%,100% { box-shadow: 0 0 0 0 rgba(107,56,212,0.4); }
+  50% { box-shadow: 0 0 0 6px rgba(107,56,212,0); }
+}
+
+.nav-cta {
+  background: var(--black); color: var(--white);
+  border: none; padding: 10px 22px; border-radius: 8px;
+  font-family: 'Manrope', sans-serif; font-size: 14px;
+  font-weight: 500; cursor: none; text-decoration: none;
+  transition: all 0.2s; display: inline-block;
+}
+.nav-cta:hover { background: var(--violet); transform: translateY(-1px); }
+
+/* MARQUEE */
+.marquee-bar {
+  background: var(--black); padding: 10px 0;
+  overflow: hidden; white-space: nowrap;
+  margin-top: 65px;
+  position: relative; z-index: 1;
+}
+.marquee-track {
+  display: inline-flex; animation: marquee 25s linear infinite;
+}
+.marquee-track:hover { animation-play-state: paused; }
+.marquee-item {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-size: 13px; font-weight: 500; color: rgba(255,255,255,0.6);
+  padding: 0 32px;
+}
+.marquee-item span { color: var(--white); }
+.marquee-dot { color: var(--violet); font-size: 18px; line-height: 1; }
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+/* HERO */
+.hero {
+  min-height: 100vh;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 80px 24px 80px;
+  text-align: center;
+  position: relative; overflow: hidden;
+}
+
+.hero-orb {
+  position: absolute; border-radius: 50%;
+  filter: blur(80px); pointer-events: none;
+  animation: orb-float 8s ease-in-out infinite;
+}
+.hero-orb-1 {
+  width: 500px; height: 500px; top: -100px; left: -150px;
+  background: radial-gradient(circle, rgba(107,56,212,0.12) 0%, transparent 70%);
+}
+.hero-orb-2 {
+  width: 400px; height: 400px; bottom: -80px; right: -100px;
+  background: radial-gradient(circle, rgba(107,56,212,0.08) 0%, transparent 70%);
+  animation-delay: -4s;
+}
+@keyframes orb-float {
+  0%,100% { transform: translate(0,0) scale(1); }
+  33% { transform: translate(30px,-20px) scale(1.05); }
+  66% { transform: translate(-20px,30px) scale(0.95); }
+}
+
+/* FLOATING CHIPS */
+.floating-chips {
+  position: absolute; inset: 0; pointer-events: none; overflow: hidden;
+}
+.chip {
+  position: absolute;
+  background: var(--white); border: 0.5px solid var(--gray-200);
+  border-radius: 999px; padding: 8px 16px;
+  font-size: 12px; font-weight: 500; color: var(--gray-600);
+  display: flex; align-items: center; gap: 6px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+  animation: chip-float 6s ease-in-out infinite;
+  opacity: 0; animation-fill-mode: forwards;
+}
+.chip-dot { width: 6px; height: 6px; border-radius: 50%; }
+.chip1 { top: 18%; left: 5%; animation-delay: 0.5s; }
+.chip2 { top: 28%; right: 6%; animation-delay: 1s; }
+.chip3 { top: 55%; left: 3%; animation-delay: 1.5s; }
+.chip4 { top: 65%; right: 4%; animation-delay: 2s; }
+.chip5 { bottom: 20%; left: 8%; animation-delay: 2.5s; }
+.chip6 { bottom: 25%; right: 7%; animation-delay: 3s; }
+@keyframes chip-float {
+  0% { opacity: 0; transform: translateY(10px); }
+  10% { opacity: 1; }
+  50% { transform: translateY(-8px); opacity: 1; }
+  90% { opacity: 1; }
+  100% { transform: translateY(10px); opacity: 0; }
+}
+
+.hero-eyebrow {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: var(--violet-light); color: var(--violet);
+  padding: 6px 14px; border-radius: 999px;
+  font-size: 12px; font-weight: 600; letter-spacing: 0.05em;
+  text-transform: uppercase; margin-bottom: 28px;
+  position: relative; z-index: 1;
+  animation: fadeUp 0.6s ease both;
+}
+
+.hero-headline {
+  font-family: 'Instrument Serif', serif;
+  font-size: clamp(46px, 7.5vw, 86px);
+  font-weight: 400; line-height: 1.05;
+  letter-spacing: -0.03em; color: var(--black);
+  max-width: 800px;
+  position: relative; z-index: 1;
+  animation: fadeUp 0.6s 0.1s ease both;
+}
+.hero-headline em { font-style: italic; color: var(--violet); }
+
+.hero-sub {
+  font-size: 18px; font-weight: 400; line-height: 1.7;
+  color: var(--gray-600); max-width: 520px;
+  margin-top: 24px; position: relative; z-index: 1;
+  animation: fadeUp 0.6s 0.2s ease both;
+}
+
+/* LIVE COUNTER */
+.live-counter {
+  display: flex; align-items: center; gap: 16px;
+  background: var(--white); border: 0.5px solid var(--gray-200);
+  border-radius: 14px; padding: 16px 24px; margin-top: 36px;
+  position: relative; z-index: 1;
+  animation: fadeUp 0.6s 0.3s ease both;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.06);
+}
+.live-counter-num {
+  font-family: 'Instrument Serif', serif;
+  font-size: 36px; font-weight: 400; color: var(--violet);
+  line-height: 1; min-width: 80px; text-align: center;
+  transition: all 0.3s;
+}
+.live-counter-label {
+  display: flex; flex-direction: column; gap: 2px; text-align: left;
+}
+.live-counter-title {
+  font-size: 15px; font-weight: 600; color: var(--black);
+}
+.live-counter-sub {
+  font-size: 12px; color: var(--gray-400);
+  display: flex; align-items: center; gap: 6px;
+}
+.live-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: #22c55e; animation: livepulse 1.5s infinite;
+}
+.counter-divider {
+  width: 0.5px; height: 40px; background: var(--gray-200);
+}
+
+.hero-form {
+  display: flex; gap: 10px; margin-top: 32px;
+  width: 100%; max-width: 480px;
+  position: relative; z-index: 1;
+  animation: fadeUp 0.6s 0.4s ease both;
+}
+.hero-input {
+  flex: 1; padding: 14px 18px;
+  border: 0.5px solid var(--gray-200); border-radius: 10px;
+  background: var(--white); font-family: 'Manrope', sans-serif;
+  font-size: 15px; color: var(--black); outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.hero-input:focus {
+  border-color: var(--violet);
+  box-shadow: 0 0 0 3px rgba(107,56,212,0.1);
+}
+.hero-input::placeholder { color: var(--gray-400); }
+.hero-btn {
+  padding: 14px 24px; border-radius: 10px;
+  background: var(--violet); color: #fff;
+  border: none; font-family: 'Manrope', sans-serif;
+  font-size: 15px; font-weight: 500; cursor: none;
+  white-space: nowrap; transition: all 0.2s;
+  position: relative; overflow: hidden;
+}
+.hero-btn::after {
+  content: ''; position: absolute; inset: 0;
+  background: rgba(255,255,255,0.15);
+  transform: translateX(-100%); transition: transform 0.3s;
+}
+.hero-btn:hover::after { transform: translateX(0); }
+.hero-btn:hover { transform: translateY(-1px); }
+
+/* HERO AVATARS */
+.hero-social-proof {
+  display: flex; align-items: center; gap: 12px; margin-top: 20px;
+  position: relative; z-index: 1;
+  animation: fadeUp 0.6s 0.5s ease both;
+}
+.hero-avatars { display: flex; }
+.hero-avatar {
+  width: 30px; height: 30px; border-radius: 50%;
+  border: 2px solid var(--cream); margin-left: -8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700;
+}
+.hero-avatar:first-child { margin-left: 0; }
+.av1 { background: #fde8d8; color: #c05621; }
+.av2 { background: #e8f5e9; color: #2e7d32; }
+.av3 { background: #e8eaf6; color: #3949ab; }
+.av4 { background: #fce4ec; color: #c2185b; }
+.av5 { background: #fff9c4; color: #f57f17; }
+.hero-proof-text { font-size: 13px; color: var(--gray-600); }
+.hero-proof-text strong { color: var(--black); font-weight: 600; }
+
+/* MOCK UI */
+.hero-mock {
+  margin-top: 64px; position: relative; z-index: 1;
+  width: 100%; max-width: 960px;
+  animation: fadeUp 0.8s 0.6s ease both;
+}
+.mock-frame {
+  background: var(--white); border: 0.5px solid var(--gray-200);
+  border-radius: 24px; padding: 28px;
+  display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px;
+  box-shadow: 0 40px 80px rgba(0,0,0,0.07), 0 0 0 0.5px rgba(0,0,0,0.04);
+  position: relative;
+}
+.mock-frame::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0;
+  height: 2px; background: linear-gradient(90deg, transparent, var(--violet), transparent);
+  border-radius: 24px 24px 0 0; opacity: 0.4;
+}
+.mock-header {
+  grid-column: 1/-1; display: flex; align-items: center;
+  justify-content: space-between; padding-bottom: 20px;
+  border-bottom: 0.5px solid var(--gray-200); margin-bottom: 4px;
+}
+.mock-title { font-size: 15px; font-weight: 700; color: var(--black); }
+.mock-credits {
+  background: var(--violet-light); color: var(--violet);
+  font-size: 12px; font-weight: 600; padding: 5px 12px;
+  border-radius: 999px;
+}
+.mock-filters { display: flex; gap: 8px; }
+.mock-filter {
+  font-size: 11px; padding: 4px 12px; border-radius: 999px;
+  border: 0.5px solid var(--gray-200); color: var(--gray-600);
+}
+.mock-filter.active { background: var(--black); color: var(--white); border-color: var(--black); }
+
+.mock-card {
+  background: var(--cream); border: 0.5px solid var(--gray-200);
+  border-radius: 16px; padding: 16px;
+  display: flex; flex-direction: column; gap: 10px;
+  transition: transform 0.3s, box-shadow 0.3s;
+  animation: card-float 4s ease-in-out infinite;
+}
+.mock-card:nth-child(3) { animation-delay: -1.3s; }
+.mock-card:nth-child(4) { animation-delay: -2.6s; }
+@keyframes card-float {
+  0%,100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+.mock-card-header { display: flex; align-items: center; gap: 10px; }
+.mock-avatar {
+  width: 40px; height: 40px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; font-weight: 700; flex-shrink: 0;
+}
+.mock-name { font-size: 13px; font-weight: 600; color: var(--black); }
+.mock-loc { font-size: 11px; color: var(--gray-400); margin-top: 1px; }
+.mock-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: var(--violet-light); color: var(--violet);
+  font-size: 10px; font-weight: 600; padding: 3px 8px;
+  border-radius: 999px; width: fit-content;
+}
+.mock-stats {
+  display: flex; gap: 14px; padding: 10px 0;
+  border-top: 0.5px solid var(--gray-200);
+  border-bottom: 0.5px solid var(--gray-200);
+}
+.mock-stat-label { font-size: 9px; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.04em; }
+.mock-stat-val { font-size: 14px; font-weight: 700; color: var(--black); margin-top: 2px; }
+.mock-tags { display: flex; gap: 5px; flex-wrap: wrap; }
+.mock-tag {
+  background: var(--gray-100); color: var(--gray-600);
+  font-size: 10px; padding: 3px 8px; border-radius: 999px;
+  border: 0.5px solid var(--gray-200);
+}
+.mock-unlock-btn {
+  background: var(--black); color: #fff;
+  border: none; border-radius: 8px; padding: 9px;
+  font-size: 12px; font-weight: 500; text-align: center;
+}
+.mock-unlocked {
+  background: #f0fdf4; color: #166534;
+  border-radius: 8px; padding: 8px;
+  font-size: 11px; font-weight: 500; text-align: center;
+  border: 0.5px solid #bbf7d0;
+}
+
+/* SECTION BASE */
+section { padding: 100px 24px; }
+.section-inner { max-width: 1100px; margin: 0 auto; }
+.section-label {
+  font-size: 12px; font-weight: 600; letter-spacing: 0.08em;
+  text-transform: uppercase; color: var(--violet); margin-bottom: 16px;
+}
+.section-title {
+  font-family: 'Instrument Serif', serif;
+  font-size: clamp(34px, 5vw, 54px);
+  font-weight: 400; line-height: 1.1;
+  letter-spacing: -0.02em; color: var(--black); max-width: 600px;
+}
+.section-title em { font-style: italic; color: var(--violet); }
+.section-sub {
+  font-size: 17px; color: var(--gray-600);
+  line-height: 1.6; max-width: 500px; margin-top: 16px;
+}
+
+/* HOW IT WORKS */
+.how { background: var(--black); }
+.how .section-title { color: var(--white); max-width: 700px; }
+.how .section-label { color: rgba(196,181,253,0.7); }
+.how .section-sub { color: var(--gray-400); }
+.how-grid {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 60px; margin-top: 72px;
+}
+.how-side-label {
+  font-size: 12px; font-weight: 600; letter-spacing: 0.1em;
+  text-transform: uppercase; padding: 6px 14px; border-radius: 999px;
+  display: inline-block; margin-bottom: 36px;
+}
+.how-creator-label { background: rgba(107,56,212,0.2); color: #c4b5fd; }
+.how-hirer-label { background: rgba(255,255,255,0.08); color: var(--gray-400); }
+.how-step {
+  display: flex; gap: 20px; margin-bottom: 32px;
+  opacity: 0; transform: translateX(-20px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+.how-step.how-right { transform: translateX(20px); }
+.how-step.visible { opacity: 1; transform: translateX(0); }
+.how-step-num {
+  width: 38px; height: 38px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 700; flex-shrink: 0;
+}
+.creator-num { background: rgba(107,56,212,0.2); color: #c4b5fd; }
+.hirer-num { background: rgba(255,255,255,0.08); color: var(--gray-400); }
+.how-step-title { font-size: 16px; font-weight: 600; color: var(--white); margin-bottom: 6px; }
+.how-step-desc { font-size: 14px; color: var(--gray-400); line-height: 1.6; }
+
+/* FEATURES */
+.features-grid {
+  display: grid; grid-template-columns: repeat(3,1fr);
+  gap: 20px; margin-top: 64px;
+}
+.feature-card {
+  background: var(--white); border: 0.5px solid var(--gray-200);
+  border-radius: 20px; padding: 32px;
+  transition: transform 0.25s, box-shadow 0.25s;
+  position: relative; overflow: hidden;
+}
+.feature-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0;
+  height: 2px; background: linear-gradient(90deg, var(--violet), var(--violet-mid));
+  transform: scaleX(0); transition: transform 0.3s; transform-origin: left;
+}
+.feature-card:hover { transform: translateY(-6px); box-shadow: 0 24px 48px rgba(0,0,0,0.08); }
+.feature-card:hover::before { transform: scaleX(1); }
+.feature-icon {
+  width: 52px; height: 52px; border-radius: 14px;
+  background: var(--violet-light);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 24px; margin-bottom: 20px;
+}
+.feature-title { font-size: 17px; font-weight: 600; color: var(--black); margin-bottom: 10px; }
+.feature-desc { font-size: 14px; color: var(--gray-600); line-height: 1.65; }
+
+/* SUGGESTIONS */
+.suggestions { background: var(--gray-100); }
+.suggestions-intro {
+  display: flex; justify-content: space-between;
+  align-items: flex-end; flex-wrap: wrap; gap: 24px;
+  margin-bottom: 48px;
+}
+.suggestions-tabs {
+  display: flex; gap: 0;
+  background: var(--white); border: 0.5px solid var(--gray-200);
+  border-radius: 12px; padding: 4px;
+}
+.suggestion-tab {
+  padding: 10px 22px; border-radius: 9px;
+  font-family: 'Manrope', sans-serif; font-size: 14px;
+  font-weight: 500; cursor: none; border: none;
+  transition: all 0.2s; color: var(--gray-600); background: transparent;
+}
+.suggestion-tab.active { background: var(--violet); color: #fff; }
+
+.suggestions-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 20px;
+}
+
+.suggestion-form-card {
+  background: var(--white); border: 0.5px solid var(--gray-200);
+  border-radius: 20px; padding: 32px;
+}
+.suggestion-form-title {
+  font-size: 17px; font-weight: 600; color: var(--black); margin-bottom: 6px;
+}
+.suggestion-form-sub {
+  font-size: 14px; color: var(--gray-600); margin-bottom: 24px; line-height: 1.5;
+}
+.suggestion-input, .suggestion-textarea, .suggestion-select-field {
+  width: 100%; padding: 13px 16px;
+  border: 0.5px solid var(--gray-200); border-radius: 10px;
+  background: var(--gray-100); font-family: 'Manrope', sans-serif;
+  font-size: 14px; color: var(--black); outline: none;
+  transition: border-color 0.2s, background 0.2s;
+  margin-bottom: 12px; display: block;
+}
+.suggestion-input:focus, .suggestion-textarea:focus {
+  border-color: var(--violet); background: var(--white);
+  box-shadow: 0 0 0 3px rgba(107,56,212,0.08);
+}
+.suggestion-input::placeholder, .suggestion-textarea::placeholder { color: var(--gray-400); }
+.suggestion-textarea { min-height: 110px; resize: vertical; }
+.suggestion-select-field {
+  appearance: none; -webkit-appearance: none; cursor: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23b0aa9e' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 14px center;
+}
+.suggestion-submit {
+  width: 100%; padding: 13px; border-radius: 10px;
+  background: var(--violet); color: #fff; border: none;
+  font-family: 'Manrope', sans-serif; font-size: 14px;
+  font-weight: 500; cursor: none; transition: all 0.2s; margin-top: 4px;
+}
+.suggestion-submit:hover { background: #5a2db8; transform: translateY(-1px); }
+
+.suggestions-feed {
+  background: var(--white); border: 0.5px solid var(--gray-200);
+  border-radius: 20px; padding: 32px;
+  display: flex; flex-direction: column; gap: 0;
+  max-height: 520px; overflow-y: auto;
+}
+.suggestions-feed::-webkit-scrollbar { width: 3px; }
+.suggestions-feed::-webkit-scrollbar-track { background: transparent; }
+.suggestions-feed::-webkit-scrollbar-thumb { background: var(--gray-200); border-radius: 3px; }
+
+.feed-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 24px;
+}
+.feed-title { font-size: 15px; font-weight: 600; color: var(--black); }
+.feed-count {
+  font-size: 12px; color: var(--gray-400);
+  background: var(--gray-100); padding: 4px 10px; border-radius: 999px;
+}
+
+.suggestion-item {
+  padding: 16px 0; border-bottom: 0.5px solid var(--gray-200);
+  animation: slideIn 0.4s ease both;
+}
+.suggestion-item:last-child { border-bottom: none; padding-bottom: 0; }
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.suggestion-item-header {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 8px;
+}
+.suggestion-role-badge {
+  font-size: 10px; font-weight: 600; padding: 3px 9px;
+  border-radius: 999px; text-transform: uppercase; letter-spacing: 0.04em;
+}
+.badge-creator { background: var(--violet-light); color: var(--violet); }
+.badge-hirer { background: #f0fdf4; color: #166534; }
+.suggestion-category {
+  font-size: 11px; color: var(--gray-400); margin-left: auto;
+}
+.suggestion-text {
+  font-size: 14px; color: var(--gray-600); line-height: 1.6;
+}
+.suggestion-name { font-size: 12px; color: var(--gray-400); margin-top: 6px; }
+
+.feed-empty {
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; padding: 40px 20px; gap: 12px;
+  text-align: center; color: var(--gray-400);
+}
+.feed-empty-icon {
+  font-size: 32px; opacity: 0.4;
+}
+.feed-empty-text { font-size: 14px; }
+
+/* PRICING */
+.pricing { background: var(--white); }
+.pricing-grid {
+  display: grid; grid-template-columns: repeat(3,1fr);
+  gap: 20px; margin-top: 64px;
+}
+.pricing-card {
+  background: var(--gray-100); border: 0.5px solid var(--gray-200);
+  border-radius: 20px; padding: 32px; position: relative;
+  transition: transform 0.2s;
+}
+.pricing-card:hover { transform: translateY(-4px); }
+.pricing-card.featured {
+  border: 1.5px solid var(--violet);
+  background: var(--black); color: var(--white);
+}
+.pricing-badge {
+  position: absolute; top: -13px; left: 50%; transform: translateX(-50%);
+  background: var(--violet); color: #fff;
+  font-size: 11px; font-weight: 600; padding: 5px 16px;
+  border-radius: 999px; white-space: nowrap;
+}
+.pricing-name {
+  font-size: 13px; font-weight: 600; letter-spacing: 0.06em;
+  text-transform: uppercase; color: var(--gray-600); margin-bottom: 12px;
+}
+.pricing-card.featured .pricing-name { color: #c4b5fd; }
+.pricing-price {
+  font-family: 'Instrument Serif', serif;
+  font-size: 44px; font-weight: 400; color: var(--black); line-height: 1;
+}
+.pricing-card.featured .pricing-price { color: var(--white); }
+.pricing-period { font-size: 14px; color: var(--gray-600); margin-bottom: 28px; margin-top: 4px; }
+.pricing-card.featured .pricing-period { color: var(--gray-400); }
+.pricing-features { list-style: none; display: flex; flex-direction: column; gap: 12px; }
+.pricing-features li {
+  display: flex; gap: 10px; font-size: 14px;
+  color: var(--gray-600); align-items: flex-start;
+}
+.pricing-card.featured .pricing-features li { color: var(--gray-400); }
+.pricing-check {
+  width: 18px; height: 18px; border-radius: 50%;
+  background: var(--violet-light); color: var(--violet);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px; flex-shrink: 0; margin-top: 1px;
+}
+.pricing-card.featured .pricing-check { background: rgba(107,56,212,0.3); color: #c4b5fd; }
+.pricing-btn {
+  display: block; width: 100%; margin-top: 32px; padding: 13px;
+  border-radius: 10px; font-family: 'Manrope', sans-serif; font-size: 14px;
+  font-weight: 500; text-align: center; cursor: none;
+  transition: all 0.2s; text-decoration: none;
+  border: 0.5px solid var(--gray-200);
+  background: var(--white); color: var(--black);
+}
+.pricing-btn:hover { background: var(--black); color: var(--white); border-color: var(--black); }
+.pricing-card.featured .pricing-btn { background: var(--violet); color: #fff; border-color: var(--violet); }
+.pricing-card.featured .pricing-btn:hover { background: #5a2db8; }
+
+/* SIGNUP */
+.signup { background: var(--black); text-align: center; }
+.signup .section-title { color: var(--white); margin: 0 auto; text-align: center; }
+.signup .section-sub { color: var(--gray-400); margin: 16px auto 0; text-align: center; }
+.signup-tabs {
+  display: flex; gap: 0; margin: 48px auto 0; max-width: 480px;
+  background: rgba(255,255,255,0.06); border-radius: 12px; padding: 4px;
+}
+.signup-tab {
+  flex: 1; padding: 12px 20px; border-radius: 9px;
+  font-family: 'Manrope', sans-serif; font-size: 14px;
+  font-weight: 500; cursor: none; border: none;
+  transition: all 0.2s; color: var(--gray-400); background: transparent;
+}
+.signup-tab.active { background: var(--violet); color: #fff; }
+.signup-form-wrap { max-width: 480px; margin: 24px auto 0; }
+.signup-form { display: flex; flex-direction: column; gap: 12px; }
+.signup-input {
+  padding: 14px 18px; border: 0.5px solid rgba(255,255,255,0.12);
+  border-radius: 10px; background: rgba(255,255,255,0.06);
+  font-family: 'Manrope', sans-serif; font-size: 15px;
+  color: var(--white); outline: none; transition: border-color 0.2s;
+}
+.signup-input:focus { border-color: var(--violet); }
+.signup-input::placeholder { color: rgba(255,255,255,0.25); }
+.signup-select {
+  padding: 14px 18px; border: 0.5px solid rgba(255,255,255,0.12);
+  border-radius: 10px; background: rgba(255,255,255,0.06);
+  font-family: 'Manrope', sans-serif; font-size: 15px;
+  color: rgba(255,255,255,0.6); outline: none; cursor: none;
+  appearance: none; -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.3)' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 14px center;
+}
+.signup-select option { background: #1a1820; color: var(--white); }
+.signup-submit {
+  padding: 15px; border-radius: 10px;
+  background: var(--violet); color: #fff; border: none;
+  font-family: 'Manrope', sans-serif; font-size: 15px;
+  font-weight: 500; cursor: none; transition: all 0.2s; margin-top: 4px;
+}
+.signup-submit:hover { background: #5a2db8; transform: translateY(-1px); }
+.signup-success {
+  display: none; flex-direction: column; align-items: center;
+  gap: 16px; padding: 40px 20px;
+}
+.signup-success.show { display: flex; }
+.success-icon { font-size: 48px; }
+.success-title {
+  font-family: 'Instrument Serif', serif;
+  font-size: 30px; color: var(--white);
+}
+.success-sub { font-size: 15px; color: var(--gray-400); line-height: 1.6; }
+
+/* FOOTER */
+footer {
+  border-top: 0.5px solid var(--gray-200);
+  padding: 36px 48px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.footer-brand { display: flex; align-items: center; gap: 10px; }
+.footer-brand img { height: 24px; width: auto; }
+.footer-copy { font-size: 13px; color: var(--gray-400); }
+.footer-links { display: flex; gap: 24px; }
+.footer-links a { font-size: 13px; color: var(--gray-400); text-decoration: none; transition: color 0.2s; }
+.footer-links a:hover { color: var(--black); }
+
+/* ANIMATIONS */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.reveal {
+  opacity: 0; transform: translateY(32px);
+  transition: opacity 0.7s ease, transform 0.7s ease;
+}
+.reveal.visible { opacity: 1; transform: translateY(0); }
+
+/* TOAST */
+.toast {
+  position: fixed; bottom: 28px; left: 50%;
+  transform: translateX(-50%) translateY(80px);
+  background: var(--black); color: var(--white);
+  padding: 14px 24px; border-radius: 12px;
+  font-size: 14px; font-weight: 500;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+  transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1); z-index: 999;
+  display: flex; align-items: center; gap: 10px;
+  border: 0.5px solid rgba(255,255,255,0.1);
+}
+.toast.show { transform: translateX(-50%) translateY(0); }
+.toast-icon { font-size: 16px; }
+
+/* MOBILE */
+@media (max-width: 768px) {
+  nav { padding: 14px 20px; }
+  .nav-links { display: none; }
+  .nav-counter { display: none; }
+  .mock-frame { grid-template-columns: 1fr; }
+  .mock-card:nth-child(3), .mock-card:nth-child(4) { display: none; }
+  .how-grid, .features-grid, .pricing-grid { grid-template-columns: 1fr; }
+  .suggestions-grid { grid-template-columns: 1fr; }
+  footer { flex-direction: column; gap: 16px; text-align: center; }
+  .footer-links { flex-wrap: wrap; justify-content: center; }
+  .hero-form { flex-direction: column; }
+  .floating-chips { display: none; }
+  .live-counter { flex-direction: column; gap: 12px; }
+  .counter-divider { display: none; }
+  body { cursor: auto; }
+  .cursor, .cursor-ring { display: none; }
+}
+</style>
+</head>
+<body>
+
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+
+<!-- NAV -->
+<nav id="navbar">
+  <a href="#" class="nav-logo">
+    <img src="creato-logo.png" alt="Creato" onerror="this.style.display='none'; document.querySelector('.nav-logo-text').style.display='block'">
+    <span class="nav-logo-text">Creato</span>
+  </a>
+  <ul class="nav-links">
+    <li><a href="#how">How it works</a></li>
+    <li><a href="#features">Features</a></li>
+    <li><a href="#suggestions">Suggestions</a></li>
+    <li><a href="#pricing">Pricing</a></li>
+  </ul>
+  <div style="display:flex;align-items:center;gap:12px">
+    <div class="nav-counter">
+      <div class="nav-counter-dot"></div>
+      <span id="navCount">0</span> on waitlist
+    </div>
+    <a href="#signup" class="nav-cta">Join waitlist →</a>
+  </div>
+</nav>
+
+<!-- MARQUEE -->
+<div class="marquee-bar">
+  <div class="marquee-track" id="marqueeTrack">
+    <span class="marquee-item"><span class="marquee-dot">✦</span> <span>Fashion creators</span> · 12K–2M followers</span>
+    <span class="marquee-item"><span class="marquee-dot">✦</span> <span>Tech reviewers</span> · YouTube & Instagram</span>
+    <span class="marquee-item"><span class="marquee-dot">✦</span> <span>Food bloggers</span> · Hyderabad, Mumbai, Delhi</span>
+    <span class="marquee-item"><span class="marquee-dot">✦</span> <span>Fitness influencers</span> · 4%+ engagement</span>
+    <span class="marquee-item"><span class="marquee-dot">✦</span> <span>Travel creators</span> · 50K–500K reach</span>
+    <span class="marquee-item"><span class="marquee-dot">✦</span> <span>Beauty & skincare</span> · Brand partnerships</span>
+    <span class="marquee-item"><span class="marquee-dot">✦</span> <span>Direct quotations</span> · No middlemen</span>
+    <span class="marquee-item"><span class="marquee-dot">✦</span> <span>Verified creators</span> · Trusted profiles</span>
+    <span class="marquee-item"><span class="marquee-dot">✦</span> <span>Fashion creators</span> · 12K–2M followers</span>
+    <span class="marquee-item"><span class="marquee-dot">✦</span> <span>Tech reviewers</span> · YouTube & Instagram</span>
+    <span class="marquee-item"><span class="marquee-dot">✦</span> <span>Food bloggers</span> · Hyderabad, Mumbai, Delhi</span>
+    <span class="marquee-item"><span class="marquee-dot">✦</span> <span>Fitness influencers</span> · 4%+ engagement</span>
+    <span class="marquee-item"><span class="marquee-dot">✦</span> <span>Travel creators</span> · 50K–500K reach</span>
+    <span class="marquee-item"><span class="marquee-dot">✦</span> <span>Beauty & skincare</span> · Brand partnerships</span>
+    <span class="marquee-item"><span class="marquee-dot">✦</span> <span>Direct quotations</span> · No middlemen</span>
+    <span class="marquee-item"><span class="marquee-dot">✦</span> <span>Verified creators</span> · Trusted profiles</span>
+  </div>
+</div>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-orb hero-orb-1"></div>
+  <div class="hero-orb hero-orb-2"></div>
+
+  <div class="floating-chips">
+    <div class="chip chip1"><div class="chip-dot" style="background:#e1306c"></div>248K Instagram</div>
+    <div class="chip chip2"><div class="chip-dot" style="background:#6b38d4"></div>✓ Verified creator</div>
+    <div class="chip chip3"><div class="chip-dot" style="background:#22c55e"></div>₹15,000/campaign</div>
+    <div class="chip chip4"><div class="chip-dot" style="background:#ff0000"></div>520K YouTube</div>
+    <div class="chip chip5"><div class="chip-dot" style="background:#f59e0b"></div>4.2% engagement</div>
+    <div class="chip chip6"><div class="chip-dot" style="background:#3b82f6"></div>Quotation received</div>
+  </div>
+
+  <div class="hero-eyebrow">
+    <div style="width:6px;height:6px;border-radius:50%;background:var(--violet);animation:livepulse 1.5s infinite"></div>
+    Now accepting early access signups
+  </div>
+
+  <h1 class="hero-headline">
+    Where <em>brands</em> meet the right <em>creators</em>
+  </h1>
+
+  <p class="hero-sub">
+    A professional marketplace that connects content creators with brands and agencies. No middlemen, no agencies — just direct collaboration.
+  </p>
+
+  <!-- LIVE COUNTER -->
+  <div class="live-counter reveal">
+    <div style="text-align:center">
+      <div class="live-counter-num" id="heroCountCreators">0</div>
+      <div class="live-counter-label">
+        <div class="live-counter-title">Creators</div>
+        <div class="live-counter-sub"><div class="live-dot"></div>Signed up</div>
+      </div>
+    </div>
+    <div class="counter-divider"></div>
+    <div style="text-align:center">
+      <div class="live-counter-num" id="heroCountHirers">0</div>
+      <div class="live-counter-label">
+        <div class="live-counter-title">Brands</div>
+        <div class="live-counter-sub"><div class="live-dot"></div>On waitlist</div>
+      </div>
+    </div>
+    <div class="counter-divider"></div>
+    <div style="text-align:center">
+      <div class="live-counter-num" id="heroCountSuggestions">0</div>
+      <div class="live-counter-label">
+        <div class="live-counter-title">Suggestions</div>
+        <div class="live-counter-sub"><div class="live-dot"></div>Submitted</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="hero-form">
+    <input type="email" class="hero-input" placeholder="Enter your email address" id="heroEmail">
+    <button class="hero-btn" onclick="heroSignup()">Get early access</button>
+  </div>
+
+  <div class="hero-social-proof reveal">
+    <div class="hero-avatars">
+      <div class="hero-avatar av1">AK</div>
+      <div class="hero-avatar av2">PS</div>
+      <div class="hero-avatar av3">RM</div>
+      <div class="hero-avatar av4">NJ</div>
+      <div class="hero-avatar av5">DK</div>
+    </div>
+    <p class="hero-proof-text"><strong id="proofCount">Loading...</strong> people already on the waitlist</p>
+  </div>
+
+  <!-- MOCK UI -->
+  <div class="hero-mock">
+    <div class="mock-frame">
+      <div class="mock-header">
+        <div class="mock-title">Discover creators</div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <div class="mock-filters">
+            <span class="mock-filter active">All</span>
+            <span class="mock-filter">Fashion</span>
+            <span class="mock-filter">Tech</span>
+          </div>
+          <div class="mock-credits">7 credits</div>
+        </div>
+      </div>
+      <div class="mock-card">
+        <div class="mock-card-header">
+          <div class="mock-avatar" style="background:#fde8d8;color:#c05621">AK</div>
+          <div><div class="mock-name">Aryan Kumar</div><div class="mock-loc">Mumbai · Fashion</div></div>
+        </div>
+        <div class="mock-badge">✓ Verified</div>
+        <div class="mock-stats">
+          <div><div class="mock-stat-label">Instagram</div><div class="mock-stat-val">248K</div></div>
+          <div><div class="mock-stat-label">Eng. rate</div><div class="mock-stat-val">4.2%</div></div>
+        </div>
+        <div class="mock-tags"><span class="mock-tag">Fashion</span><span class="mock-tag">Lifestyle</span></div>
+        <div class="mock-unlocked">✓ Unlocked · View contact</div>
+      </div>
+      <div class="mock-card">
+        <div class="mock-card-header">
+          <div class="mock-avatar" style="background:#e8f5e9;color:#2e7d32">PS</div>
+          <div><div class="mock-name">Priya Sharma</div><div class="mock-loc">Delhi · Food</div></div>
+        </div>
+        <div class="mock-badge">✓ Verified</div>
+        <div class="mock-stats">
+          <div><div class="mock-stat-label">YouTube</div><div class="mock-stat-val">180K</div></div>
+          <div><div class="mock-stat-label">Eng. rate</div><div class="mock-stat-val">6.1%</div></div>
+        </div>
+        <div class="mock-tags"><span class="mock-tag">Food</span><span class="mock-tag">Travel</span></div>
+        <div class="mock-unlock-btn">Unlock · 1 credit</div>
+      </div>
+      <div class="mock-card">
+        <div class="mock-card-header">
+          <div class="mock-avatar" style="background:#e8eaf6;color:#3949ab">RM</div>
+          <div><div class="mock-name">Rahul Mehta</div><div class="mock-loc">Bangalore · Tech</div></div>
+        </div>
+        <div class="mock-stats">
+          <div><div class="mock-stat-label">YouTube</div><div class="mock-stat-val">520K</div></div>
+          <div><div class="mock-stat-label">Eng. rate</div><div class="mock-stat-val">3.8%</div></div>
+        </div>
+        <div class="mock-tags"><span class="mock-tag">Tech</span><span class="mock-tag">Gaming</span></div>
+        <div class="mock-unlock-btn">Unlock · 1 credit</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="how" id="how">
+  <div class="section-inner">
+    <div class="section-label">How it works</div>
+    <h2 class="section-title">Simple for creators. <em>Powerful</em> for brands.</h2>
+    <div class="how-grid">
+      <div>
+        <span class="how-side-label how-creator-label">For creators</span>
+        <div class="how-step"><div class="how-step-num creator-num">1</div><div><div class="how-step-title">Build your profile</div><div class="how-step-desc">Add your bio, niches, social accounts, and collaboration rates. Your profile goes live instantly.</div></div></div>
+        <div class="how-step"><div class="how-step-num creator-num">2</div><div><div class="how-step-title">Get discovered by brands</div><div class="how-step-desc">Brands search by genre, reach, and location. You appear in their discover feed automatically.</div></div></div>
+        <div class="how-step"><div class="how-step-num creator-num">3</div><div><div class="how-step-title">Receive & manage quotations</div><div class="how-step-desc">Accept, negotiate, or decline brand offers — all in one place. No more email chains.</div></div></div>
+        <div class="how-step"><div class="how-step-num creator-num">4</div><div><div class="how-step-title">Collaborate and grow</div><div class="how-step-desc">Chat, finalise deals, and build long-term brand relationships without leaving the app.</div></div></div>
+      </div>
+      <div>
+        <span class="how-side-label how-hirer-label">For brands & agencies</span>
+        <div class="how-step how-right"><div class="how-step-num hirer-num">1</div><div><div class="how-step-title">Search with precision</div><div class="how-step-desc">Filter by niche, platform, follower count, location, and engagement rate in seconds.</div></div></div>
+        <div class="how-step how-right"><div class="how-step-num hirer-num">2</div><div><div class="how-step-title">Unlock profiles with credits</div><div class="how-step-desc">Preview creators free. Spend 1 credit to unlock contact info and send a quotation.</div></div></div>
+        <div class="how-step how-right"><div class="how-step-num hirer-num">3</div><div><div class="how-step-title">Send quotations directly</div><div class="how-step-desc">No agencies. Send structured collaboration offers with budget, timeline, and deliverables.</div></div></div>
+        <div class="how-step how-right"><div class="how-step-num hirer-num">4</div><div><div class="how-step-title">Manage everything in one place</div><div class="how-step-desc">Track outreach, conversations, and accepted deals from one simple dashboard.</div></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section id="features">
+  <div class="section-inner">
+    <div class="section-label reveal">Features</div>
+    <h2 class="section-title reveal">Everything you need. <em>Nothing</em> you don't.</h2>
+    <p class="section-sub reveal">Built for the way creators and brands actually work.</p>
+    <div class="features-grid">
+      <div class="feature-card reveal"><div class="feature-icon">🎯</div><div class="feature-title">Smart creator discovery</div><div class="feature-desc">Filter by niche, platform, follower count, engagement rate, and location. Find exactly who you're looking for.</div></div>
+      <div class="feature-card reveal"><div class="feature-icon">💬</div><div class="feature-title">Direct quotation system</div><div class="feature-desc">Brands send structured collaboration offers. Creators accept, negotiate, or decline — no confusion.</div></div>
+      <div class="feature-card reveal"><div class="feature-icon">✓</div><div class="feature-title">Verified creator badges</div><div class="feature-desc">Verified creators get a violet badge, priority placement in search, and 3× more brand inquiries.</div></div>
+      <div class="feature-card reveal"><div class="feature-icon">📊</div><div class="feature-title">Social stats auto-synced</div><div class="feature-desc">Link Instagram and YouTube — follower counts and engagement rates pull in and stay current.</div></div>
+      <div class="feature-card reveal"><div class="feature-icon">💰</div><div class="feature-title">Transparent pricing</div><div class="feature-desc">Creators set their own rate ranges and service packages. Brands always know what to expect.</div></div>
+      <div class="feature-card reveal"><div class="feature-icon">🔒</div><div class="feature-title">Privacy by design</div><div class="feature-desc">Contact info is hidden until a brand pays to unlock. Full creator control over who reaches them.</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- SUGGESTIONS -->
+<section class="suggestions" id="suggestions">
+  <div class="section-inner">
+    <div class="suggestions-intro">
+      <div>
+        <div class="section-label reveal">Community input</div>
+        <h2 class="section-title reveal">Help us build <em>your</em> app</h2>
+        <p class="section-sub reveal">Tell us what features matter most to you — we read every suggestion.</p>
+      </div>
+      <div class="suggestions-tabs reveal">
+        <button class="suggestion-tab active" onclick="switchSuggestionTab('creator', this)">As a creator</button>
+        <button class="suggestion-tab" onclick="switchSuggestionTab('hirer', this)">As a brand</button>
+      </div>
+    </div>
+
+    <div class="suggestions-grid">
+      <!-- FORM -->
+      <div class="suggestion-form-card reveal">
+        <div class="suggestion-form-title" id="suggFormTitle">What would you want as a creator?</div>
+        <div class="suggestion-form-sub" id="suggFormSub">Share your ideas — what features, tools, or experiences would make Creato perfect for creators like you?</div>
+
+        <input type="text" class="suggestion-input" placeholder="Your name (optional)" id="suggName">
+        <select class="suggestion-select-field" id="suggCategory">
+          <option value="" disabled selected>Feature category</option>
+          <optgroup label="Creator features" id="creatorOptions">
+            <option value="Profile & discovery">Profile & discovery</option>
+            <option value="Quotations & deals">Quotations & deals</option>
+            <option value="Analytics & insights">Analytics & insights</option>
+            <option value="Messaging & communication">Messaging & communication</option>
+            <option value="Payments & earnings">Payments & earnings</option>
+            <option value="Content & portfolio">Content & portfolio</option>
+          </optgroup>
+          <optgroup label="Brand features" id="hirerOptions" style="display:none">
+            <option value="Creator search & filtering">Creator search & filtering</option>
+            <option value="Campaign management">Campaign management</option>
+            <option value="Quotation tools">Quotation tools</option>
+            <option value="Analytics & reporting">Analytics & reporting</option>
+            <option value="Credits & billing">Credits & billing</option>
+            <option value="Team collaboration">Team collaboration</option>
+          </optgroup>
+          <option value="Other">Other / General</option>
+        </select>
+        <textarea class="suggestion-textarea" placeholder="Describe the feature or experience you'd like to see..." id="suggText"></textarea>
+        <button class="suggestion-submit" onclick="submitSuggestion()">Submit suggestion →</button>
+      </div>
+
+      <!-- LIVE FEED -->
+      <div class="suggestions-feed reveal" id="suggestionsFeed">
+        <div class="feed-header">
+          <div class="feed-title">Latest suggestions</div>
+          <div class="feed-count" id="suggFeedCount">0 total</div>
+        </div>
+        <div id="suggestionsList">
+          <div class="feed-empty">
+            <div class="feed-empty-icon">💡</div>
+            <div class="feed-empty-text">Be the first to suggest a feature!</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section class="pricing" id="pricing">
+  <div class="section-inner">
+    <div class="section-label reveal">Pricing</div>
+    <h2 class="section-title reveal">Simple, <em>transparent</em> pricing</h2>
+    <p class="section-sub reveal">Creators join free. Brands pay only when they find creators worth contacting.</p>
+    <div class="pricing-grid">
+      <div class="pricing-card reveal">
+        <div class="pricing-name">Creator — Free</div>
+        <div class="pricing-price">₹0</div>
+        <div class="pricing-period">forever</div>
+        <ul class="pricing-features">
+          <li><div class="pricing-check">✓</div>Live profile with social stats</li>
+          <li><div class="pricing-check">✓</div>Discoverable in brand search</li>
+          <li><div class="pricing-check">✓</div>Receive quotations from brands</li>
+          <li><div class="pricing-check">✓</div>In-app messaging</li>
+          <li><div class="pricing-check">✓</div>Set your own rates & packages</li>
+        </ul>
+        <a href="#signup" class="pricing-btn">Get started free</a>
+      </div>
+      <div class="pricing-card featured reveal">
+        <div class="pricing-badge">Most popular</div>
+        <div class="pricing-name">Creator — Verified</div>
+        <div class="pricing-price">₹999</div>
+        <div class="pricing-period">per year</div>
+        <ul class="pricing-features">
+          <li><div class="pricing-check">✓</div>Everything in Free</li>
+          <li><div class="pricing-check">✓</div>Violet verified badge</li>
+          <li><div class="pricing-check">✓</div>Priority in search results</li>
+          <li><div class="pricing-check">✓</div>Profile analytics dashboard</li>
+          <li><div class="pricing-check">✓</div>See which brands visited you</li>
+        </ul>
+        <a href="#signup" class="pricing-btn">Join waitlist</a>
+      </div>
+      <div class="pricing-card reveal">
+        <div class="pricing-name">Brand / Agency</div>
+        <div class="pricing-price">₹499</div>
+        <div class="pricing-period">per 10 unlocks</div>
+        <ul class="pricing-features">
+          <li><div class="pricing-check">✓</div>Browse all creator profiles free</li>
+          <li><div class="pricing-check">✓</div>1 credit = 1 profile unlock</li>
+          <li><div class="pricing-check">✓</div>Send direct quotations</li>
+          <li><div class="pricing-check">✓</div>In-app messaging</li>
+          <li><div class="pricing-check">✓</div>Bulk packs: 50 or unlimited</li>
+        </ul>
+        <a href="#signup" class="pricing-btn">Start hiring</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SIGNUP -->
+<section class="signup" id="signup">
+  <div class="section-inner" style="text-align:center">
+    <div class="section-label" style="color:rgba(196,181,253,0.7)">Early access</div>
+    <h2 class="section-title" style="margin:0 auto">Be first when we <em>launch</em></h2>
+    <p class="section-sub" style="margin:16px auto 0">
+      We're onboarding our first 500 creators and brands.<br>
+      Join the waitlist and get 3 months of Verified badge free.
+    </p>
+    <div class="signup-tabs">
+      <button class="signup-tab active" onclick="switchTab('creator', this)">I'm a creator</button>
+      <button class="signup-tab" onclick="switchTab('brand', this)">I'm a brand</button>
+    </div>
+    <div class="signup-form-wrap">
+      <div class="signup-form" id="signupForm">
+        <input type="text" class="signup-input" placeholder="Your full name" id="signupName">
+        <input type="email" class="signup-input" placeholder="Email address" id="signupEmail">
+        <select class="signup-select" id="signupSelect">
+          <option value="" disabled selected>Your primary niche / industry</option>
+          <optgroup label="For creators">
+            <option>Fashion & Lifestyle</option>
+            <option>Tech & Gaming</option>
+            <option>Food & Beverage</option>
+            <option>Fitness & Health</option>
+            <option>Travel</option>
+            <option>Finance</option>
+            <option>Beauty & Skincare</option>
+            <option>Education</option>
+            <option>Comedy & Entertainment</option>
+            <option>Music</option>
+          </optgroup>
+          <optgroup label="For brands">
+            <option>Fashion & Apparel</option>
+            <option>Food & Beverage Brand</option>
+            <option>Tech Company</option>
+            <option>Beauty Brand</option>
+            <option>Health & Wellness</option>
+            <option>E-commerce</option>
+            <option>Finance / Fintech</option>
+            <option>Marketing Agency</option>
+          </optgroup>
+        </select>
+        <button class="signup-submit" onclick="handleSignup()">Join the waitlist →</button>
+      </div>
+      <div class="signup-success" id="signupSuccess">
+        <div class="success-icon">🎉</div>
+        <div class="success-title">You're on the list!</div>
+        <p class="success-sub">We'll email you the moment Creato launches.<br>You'll get <strong style="color:#c4b5fd">3 months of Verified badge free</strong> as an early member.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-brand">
+    <img src="creato-logo.png" alt="Creato" onerror="this.outerHTML='<span style=\'font-size:16px;font-weight:700\'>Creato</span>'">
+  </div>
+  <span class="footer-copy">© 2026 Creato. Building the future of creator economy.</span>
+  <div class="footer-links">
+    <a href="#how">How it works</a>
+    <a href="#features">Features</a>
+    <a href="#suggestions">Suggestions</a>
+    <a href="mailto:hello@creato.app">Contact</a>
+  </div>
+</footer>
+
+<div class="toast" id="toast">
+  <span class="toast-icon" id="toastIcon">✓</span>
+  <span id="toastMsg">Done!</span>
+</div>
+
+<script>
+// ─── SUPABASE SETUP ──────────────────────────────────────────────
+// IMPORTANT: Replace these with your actual Supabase credentials
+// Go to supabase.com → your project → Settings → API
+const SUPABASE_URL = 'sb_publishable_QjCv2d1H528MXDxoLF_xhg_ZjtslLT_';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRmdnplaWNzdmt4amZwaWdjc2hwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4NzYzMzksImV4cCI6MjA5MDQ1MjMzOX0.k7-A0dDi9SLTURoql1m3Hekl9Sa1zOVve3OmXbhvUMc';
+
+let supabaseClient = null;
+let useSupabase = false;
+
+try {
+  if (SUPABASE_URL !== 'YOUR_SUPABASE_URL') {
+    supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    useSupabase = true;
+  }
+} catch(e) {
+  console.log('Supabase not configured — using local storage fallback');
+}
+
+// ─── LOCAL STORAGE FALLBACK ──────────────────────────────────────
+// Works without Supabase — data stored in browser
+let localData = {
+  signups: JSON.parse(localStorage.getItem('creato_signups') || '[]'),
+  suggestions: JSON.parse(localStorage.getItem('creato_suggestions') || '[]')
+};
+
+function saveLocal() {
+  localStorage.setItem('creato_signups', JSON.stringify(localData.signups));
+  localStorage.setItem('creato_suggestions', JSON.stringify(localData.suggestions));
+}
+
+// ─── COUNTS ──────────────────────────────────────────────────────
+async function loadCounts() {
+  let creators = 0, hirers = 0, suggestions = 0;
+
+  if (useSupabase) {
+    try {
+      const [s1, s2, s3] = await Promise.all([
+        supabaseClient.from('waitlist').select('*', {count:'exact',head:true}).eq('role','creator'),
+        supabaseClient.from('waitlist').select('*', {count:'exact',head:true}).eq('role','hirer'),
+        supabaseClient.from('suggestions').select('*', {count:'exact',head:true})
+      ]);
+      creators = s1.count || 0;
+      hirers = s2.count || 0;
+      suggestions = s3.count || 0;
+    } catch(e) {
+      console.log('Using local counts');
+    }
+  }
+
+  if (!useSupabase) {
+    creators = localData.signups.filter(s => s.role === 'creator').length;
+    hirers = localData.signups.filter(s => s.role === 'hirer').length;
+    suggestions = localData.suggestions.length;
+  }
+
+  animateCount('heroCountCreators', creators);
+  animateCount('heroCountHirers', hirers);
+  animateCount('heroCountSuggestions', suggestions);
+
+  const total = creators + hirers;
+  document.getElementById('navCount').textContent = total;
+  document.getElementById('proofCount').textContent =
+    total > 0 ? `${total}+` : 'Be among the first';
+}
+
+function animateCount(id, target) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  let current = 0;
+  const step = Math.ceil(target / 40);
+  const timer = setInterval(() => {
+    current = Math.min(current + step, target);
+    el.textContent = current;
+    if (current >= target) clearInterval(timer);
+  }, 30);
+}
+
+// ─── SIGNUP ──────────────────────────────────────────────────────
+let currentTab = 'creator';
+
+function switchTab(tab, btn) {
+  currentTab = tab;
+  document.querySelectorAll('.signup-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('signupSelect').value = '';
+}
+
+function heroSignup() {
+  const email = document.getElementById('heroEmail').value.trim();
+  if (!email || !email.includes('@')) {
+    showToast('⚠️', 'Please enter a valid email address');
+    return;
+  }
+  document.getElementById('signupEmail').value = email;
+  document.getElementById('signup').scrollIntoView({ behavior: 'smooth' });
+  setTimeout(() => showToast('✓', 'Email saved — complete signup below'), 600);
+}
+
+async function handleSignup() {
+  const name = document.getElementById('signupName').value.trim();
+  const email = document.getElementById('signupEmail').value.trim();
+  const niche = document.getElementById('signupSelect').value;
+
+  if (!name) { showToast('⚠️', 'Please enter your name'); return; }
+  if (!email || !email.includes('@')) { showToast('⚠️', 'Please enter a valid email'); return; }
+  if (!niche) { showToast('⚠️', 'Please select your niche or industry'); return; }
+
+  const btn = document.querySelector('.signup-submit');
+  btn.textContent = 'Saving...';
+  btn.disabled = true;
+
+  const entry = {
+    name, email, role: currentTab, niche,
+    created_at: new Date().toISOString()
+  };
+
+  let success = false;
+
+  if (useSupabase) {
+    try {
+      const { error } = await supabaseClient.from('waitlist').insert([entry]);
+      if (!error) success = true;
+    } catch(e) {}
+  }
+
+  if (!useSupabase || !success) {
+    // Check duplicate
+    const exists = localData.signups.find(s => s.email === email);
+    if (!exists) {
+      localData.signups.push(entry);
+      saveLocal();
+    }
+    success = true;
+  }
+
+  btn.textContent = 'Join the waitlist →';
+  btn.disabled = false;
+
+  document.getElementById('signupForm').style.display = 'none';
+  document.getElementById('signupSuccess').classList.add('show');
+  showToast('🎉', 'Welcome to Creato! Check your email soon.');
+  loadCounts();
+}
+
+// ─── SUGGESTIONS ─────────────────────────────────────────────────
+let currentSuggestionTab = 'creator';
+
+function switchSuggestionTab(tab, btn) {
+  currentSuggestionTab = tab;
+  document.querySelectorAll('.suggestion-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+
+  if (tab === 'creator') {
+    document.getElementById('suggFormTitle').textContent = 'What would you want as a creator?';
+    document.getElementById('suggFormSub').textContent = 'Share your ideas — what features, tools, or experiences would make Creato perfect for creators like you?';
+    document.getElementById('creatorOptions').style.display = '';
+    document.getElementById('hirerOptions').style.display = 'none';
+  } else {
+    document.getElementById('suggFormTitle').textContent = 'What would you want as a brand?';
+    document.getElementById('suggFormSub').textContent = 'Tell us what features, data, or tools would make finding and hiring creators easier for your brand.';
+    document.getElementById('creatorOptions').style.display = 'none';
+    document.getElementById('hirerOptions').style.display = '';
+  }
+  document.getElementById('suggCategory').value = '';
+  loadSuggestions();
+}
+
+async function submitSuggestion() {
+  const name = document.getElementById('suggName').value.trim();
+  const category = document.getElementById('suggCategory').value;
+  const text = document.getElementById('suggText').value.trim();
+
+  if (!category) { showToast('⚠️', 'Please select a category'); return; }
+  if (!text || text.length < 10) { showToast('⚠️', 'Please write at least a sentence'); return; }
+
+  const btn = document.querySelector('.suggestion-submit');
+  btn.textContent = 'Submitting...';
+  btn.disabled = true;
+
+  const entry = {
+    name: name || 'Anonymous',
+    role: currentSuggestionTab,
+    category,
+    text,
+    created_at: new Date().toISOString()
+  };
+
+  let success = false;
+
+  if (useSupabase) {
+    try {
+      const { error } = await supabaseClient.from('suggestions').insert([entry]);
+      if (!error) success = true;
+    } catch(e) {}
+  }
+
+  if (!useSupabase || !success) {
+    localData.suggestions.unshift(entry);
+    saveLocal();
+    success = true;
+  }
+
+  btn.textContent = 'Submit suggestion →';
+  btn.disabled = false;
+
+  document.getElementById('suggText').value = '';
+  document.getElementById('suggName').value = '';
+  document.getElementById('suggCategory').value = '';
+
+  showToast('💡', 'Suggestion received — thank you!');
+  loadSuggestions();
+  loadCounts();
+}
+
+async function loadSuggestions() {
+  let items = [];
+
+  if (useSupabase) {
+    try {
+      const { data } = await supabaseClient
+        .from('suggestions')
+        .select('*')
+        .eq('role', currentSuggestionTab)
+        .order('created_at', { ascending: false })
+        .limit(20);
+      if (data) items = data;
+    } catch(e) {}
+  }
+
+  if (!useSupabase || items.length === 0) {
+    items = localData.suggestions.filter(s => s.role === currentSuggestionTab);
+  }
+
+  const allSuggestions = useSupabase ? [] : localData.suggestions;
+  const totalCount = useSupabase ? items.length : localData.suggestions.length;
+
+  document.getElementById('suggFeedCount').textContent =
+    `${totalCount} total`;
+
+  const list = document.getElementById('suggestionsList');
+
+  if (items.length === 0) {
+    list.innerHTML = `
+      <div class="feed-empty">
+        <div class="feed-empty-icon">💡</div>
+        <div class="feed-empty-text">Be the first to suggest a feature for ${currentSuggestionTab === 'creator' ? 'creators' : 'brands'}!</div>
+      </div>`;
+    return;
+  }
+
+  list.innerHTML = items.map((s, i) => `
+    <div class="suggestion-item" style="animation-delay:${i*0.05}s">
+      <div class="suggestion-item-header">
+        <span class="suggestion-role-badge ${s.role === 'creator' ? 'badge-creator' : 'badge-hirer'}">
+          ${s.role === 'creator' ? 'Creator' : 'Brand'}
+        </span>
+        <span class="suggestion-category">${s.category || ''}</span>
+      </div>
+      <div class="suggestion-text">${escapeHtml(s.text)}</div>
+      <div class="suggestion-name">${escapeHtml(s.name || 'Anonymous')} · ${timeAgo(s.created_at)}</div>
+    </div>
+  `).join('');
+}
+
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function timeAgo(dateStr) {
+  const diff = (Date.now() - new Date(dateStr)) / 1000;
+  if (diff < 60) return 'just now';
+  if (diff < 3600) return `${Math.floor(diff/60)}m ago`;
+  if (diff < 86400) return `${Math.floor(diff/3600)}h ago`;
+  return `${Math.floor(diff/86400)}d ago`;
+}
+
+// ─── TOAST ───────────────────────────────────────────────────────
+function showToast(icon, msg) {
+  const toast = document.getElementById('toast');
+  document.getElementById('toastIcon').textContent = icon;
+  document.getElementById('toastMsg').textContent = msg;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 3500);
+}
+
+// ─── SCROLL REVEAL ───────────────────────────────────────────────
+const revealObserver = new IntersectionObserver((entries) => {
+  entries.forEach((entry) => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('visible');
+      revealObserver.unobserve(entry.target);
+    }
+  });
+}, { threshold: 0.1 });
+
+document.querySelectorAll('.reveal, .how-step').forEach(el => revealObserver.observe(el));
+
+// ─── NAV SCROLL ──────────────────────────────────────────────────
+window.addEventListener('scroll', () => {
+  document.getElementById('navbar').classList.toggle('scrolled', window.scrollY > 60);
+});
+
+// ─── CUSTOM CURSOR ───────────────────────────────────────────────
+const cursor = document.getElementById('cursor');
+const cursorRing = document.getElementById('cursorRing');
+let mouseX = 0, mouseY = 0, ringX = 0, ringY = 0;
+
+document.addEventListener('mousemove', (e) => {
+  mouseX = e.clientX; mouseY = e.clientY;
+  cursor.style.left = mouseX + 'px';
+  cursor.style.top = mouseY + 'px';
+});
+
+function animateRing() {
+  ringX += (mouseX - ringX) * 0.12;
+  ringY += (mouseY - ringY) * 0.12;
+  cursorRing.style.left = ringX + 'px';
+  cursorRing.style.top = ringY + 'px';
+  requestAnimationFrame(animateRing);
+}
+animateRing();
+
+document.querySelectorAll('a, button, input, select, textarea').forEach(el => {
+  el.addEventListener('mouseenter', () => {
+    cursor.style.width = '18px';
+    cursor.style.height = '18px';
+    cursorRing.style.opacity = '0';
+  });
+  el.addEventListener('mouseleave', () => {
+    cursor.style.width = '10px';
+    cursor.style.height = '10px';
+    cursorRing.style.opacity = '0.4';
+  });
+});
+
+// ─── INIT ─────────────────────────────────────────────────────────
+loadCounts();
+loadSuggestions();
+
+// Realtime refresh every 30s
+setInterval(() => {
+  loadCounts();
+  loadSuggestions();
+}, 30000);
+</script>
+</body>
+</html>
